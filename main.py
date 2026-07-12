@@ -177,3 +177,36 @@ def update_students(student_id:int,student:Student):
         "message":"Updated succefully",
         "Student-id":students[student_id]
     }
+@app.put("/teachers/{teacher_id}")
+def update_teachers(teacher_id:int,teacher:Teacher):
+    if teacher_id not in teacher:
+        return {"message":"student not found"}
+    teachers[teacher_id] = {
+        "name" : teacher.name,
+        "roll_no": teacher.teacher_id,
+        "departent": teacher.department
+    }
+
+    return{
+        "message":"Updated succefully",
+        "teachers-id":teachers[teacher_id]
+    }
+
+@app.delete("/students/{student_id}")
+def delete_students(student_id:int):
+    if student_id not in students:
+        return {"Error":"Student Not Found"}
+    deleted_student = students.pop(student_id)
+    return{
+        "Message":"Student Deleted Succefully",
+        "Deleted-student":deleted_student
+    }
+@app.delete("/teachers/{teacher_id}")
+def delete_teacher(teacher_id:int):
+    if teacher_id not in teachers:
+        return {"Error":"Student Not Found"}
+    deleted_teacher = teachers.pop(teacher_id)
+    return{
+        "Message":"Student Deleted Succefully",
+        "Deleted-teacher":deleted_teacher
+    }
