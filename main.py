@@ -60,6 +60,12 @@ class Student(BaseModel):
     roll_no: str
     branch: str
 
+class Teacher(BaseModel):
+    name : str
+    teacher_id:str
+    department:str
+
+
 
 @app.get("/students")
 def get_students(branch: Optional[str] = None):
@@ -79,12 +85,25 @@ def get_students(branch: Optional[str] = None):
 def get_student_by_id(student_id: int):
     return students.get(student_id, {"error": "Student Not Found"})
 
+
 @app.post("/students")
 def create_student(student: Student):
-    return {
-        "message": "Student Created",
-        "student": student
+    new_id = max(students.keys()) + 1 if students else 1
+
+    students[new_id] = {
+        "name": student.name,
+        "age": student.age,
+        "roll_no": student.roll_no,
+        "branch": student.branch
     }
+
+    return {
+        "message": "Student created successfully",
+        "student_id":new_id,
+        "student": students[new_id]
+    }
+
+
 teachers = {
     1: {
         "name": "Ram",
@@ -121,3 +140,19 @@ def get_teachers(department: Optional[str] = None):
 @app.get("/teachers/{teacher_id}")
 def get_teacher_by_id(teacher_id: int):
     return teachers.get(teacher_id, {"error": "Teacher Not Found"})
+
+
+@app.post("/teachers")
+def create_teachers(teacher:Teacher):
+    teach_id = max(teachers.keys()) + 1 if teachers else 1
+    teachers[teach_id] = {
+        "name": teacher.name,
+        "teacher_id": teacher.teacher_id,
+        "branch": teacher.department
+    }
+
+    return {
+        "message": "Teacher created successfully",
+        "Teacher_id":teach_id,
+        "Teacher": teachers[teach_id]
+    }
