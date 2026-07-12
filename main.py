@@ -38,16 +38,19 @@ def contact():
 students = {
     1: {
         "name": "Sid",
+        "age" :19,
         "roll_no": "23CS001",
         "branch": "CSE"
     },
     2: {
         "name": "Rahul",
+        "age" :20,
         "roll_no": "23CS002",
         "branch": "ECE"
     },
     3: {
         "name": "Anitha",
+        "age" :18,
         "roll_no": "23CS003",
         "branch": "CSE"
     }
@@ -155,4 +158,22 @@ def create_teachers(teacher:Teacher):
         "message": "Teacher created successfully",
         "Teacher_id":teach_id,
         "Teacher": teachers[teach_id]
+    }
+
+
+
+@app.put("/students/{student_id}")
+def update_students(student_id:int,student:Student):
+    if student_id not in students:
+        return {"message":"student not found"}
+    students[student_id] = {
+        "name" : student.name,
+        "age": student.age,
+        "roll_no": student.roll_no,
+        "branch": student.branch
+    }
+
+    return{
+        "message":"Updated succefully",
+        "Student-id":students[student_id]
     }
