@@ -2,7 +2,8 @@ from typing import Optional
 
 from fastapi import FastAPI
 from pydantic import BaseModel
-
+from fastapi import status
+from fastapi import HTTPException
 app = FastAPI()
 
 @app.get("/")
@@ -86,10 +87,15 @@ def get_students(branch: Optional[str] = None):
 
 @app.get("/students/{student_id}")
 def get_student_by_id(student_id: int):
-    return students.get(student_id, {"error": "Student Not Found"})
+    if student_id not in students:
+        raise HTTPException(
+            status_code=404,
+            detail=" student Not found"
+        )
+    return students[student_id]
 
 
-@app.post("/students")
+@app.post("/students",status_code=status.HTTP_201_CREATED)
 def create_student(student: Student):
     new_id = max(students.keys()) + 1 if students else 1
 
@@ -142,16 +148,21 @@ def get_teachers(department: Optional[str] = None):
 
 @app.get("/teachers/{teacher_id}")
 def get_teacher_by_id(teacher_id: int):
-    return teachers.get(teacher_id, {"error": "Teacher Not Found"})
+   if teacher_id not in teachers:
+       raise HTTPException(
+           status_code=404,
+           detail="Teacher Not Found"
+       )
+   return teachers[teacher_id]
 
 
-@app.post("/teachers")
+@app.post("/teachers",status_code=status.HTTP_201_CREATED)
 def create_teachers(teacher:Teacher):
     teach_id = max(teachers.keys()) + 1 if teachers else 1
     teachers[teach_id] = {
         "name": teacher.name,
         "teacher_id": teacher.teacher_id,
-        "branch": teacher.department
+        "department": teacher.department
     }
 
     return {
@@ -165,7 +176,10 @@ def create_teachers(teacher:Teacher):
 @app.put("/students/{student_id}")
 def update_students(student_id:int,student:Student):
     if student_id not in students:
-        return {"message":"student not found"}
+       raise HTTPException(
+           status_code=404,
+           detail="Student Not Found"
+       )
     students[student_id] = {
         "name" : student.name,
         "age": student.age,
@@ -179,11 +193,14 @@ def update_students(student_id:int,student:Student):
     }
 @app.put("/teachers/{teacher_id}")
 def update_teachers(teacher_id:int,teacher:Teacher):
-    if teacher_id not in teacher:
-        return {"message":"student not found"}
+    if teacher_id not in teachers:
+       raise HTTPException(
+           status_code=404,
+           detail="Teacher Not Found"
+       )
     teachers[teacher_id] = {
         "name" : teacher.name,
-        "roll_no": teacher.teacher_id,
+        "teacher_id": teacher.teacher_id,
         "departent": teacher.department
     }
 
@@ -195,7 +212,10 @@ def update_teachers(teacher_id:int,teacher:Teacher):
 @app.delete("/students/{student_id}")
 def delete_students(student_id:int):
     if student_id not in students:
-        return {"Error":"Student Not Found"}
+       raise HTTPException(
+           status_code=404,
+           detail="Student Not Found"
+       )
     deleted_student = students.pop(student_id)
     return{
         "Message":"Student Deleted Succefully",
@@ -204,9 +224,12 @@ def delete_students(student_id:int):
 @app.delete("/teachers/{teacher_id}")
 def delete_teacher(teacher_id:int):
     if teacher_id not in teachers:
-        return {"Error":"Student Not Found"}
+       raise HTTPException(
+           status_code=404,
+           detail="Teacher Not Found"
+       )
     deleted_teacher = teachers.pop(teacher_id)
     return{
-        "Message":"Student Deleted Succefully",
+        "Message":"teacher Deleted Succefully",
         "Deleted-teacher":deleted_teacher
     }
