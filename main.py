@@ -4,6 +4,12 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi import status
 from fastapi import HTTPException
+from pymongo import MongoClient
+client = MongoClient("mongodb://localhost:27017")
+
+db = client["student_db"]
+
+collection = db["students"]
 app = FastAPI()
 
 @app.get("/")
