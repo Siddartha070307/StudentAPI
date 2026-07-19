@@ -1,16 +1,12 @@
 from typing import Optional
 
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 from pydantic import BaseModel
-from fastapi import status
 from fastapi import HTTPException
-from pymongo import MongoClient
-client = MongoClient("mongodb://localhost:27017")
+from db import students, teachers
 
-db = client["student_db"]
-
-collection = db["students"]
 app = FastAPI()
+
 
 @app.get("/")
 def home():
@@ -42,27 +38,7 @@ def contact():
     }
 
 
-students = {
-    1: {
-        "name": "Sid",
-        "age" :19,
-        "roll_no": "23CS001",
-        "branch": "CSE"
-    },
-    2: {
-        "name": "Rahul",
-        "age" :20,
-        "roll_no": "23CS002",
-        "branch": "ECE"
-    },
-    3: {
-        "name": "Anitha",
-        "age" :18,
-        "roll_no": "23CS003",
-        "branch": "CSE"
-    }
-}
-
+# -------------------- Models --------------------
 
 class Student(BaseModel):
     name: str
@@ -70,172 +46,136 @@ class Student(BaseModel):
     roll_no: str
     branch: str
 
+
 class Teacher(BaseModel):
-    name : str
-    teacher_id:str
-    department:str
+    name: str
+    teacher_id: str
+    department: str
 
 
+# -------------------- Student Routes --------------------
 
 @app.get("/students")
 def get_students(branch: Optional[str] = None):
-    if branch is None:
-        return students
 
     result = []
 
-    for student in students.values():
-        if student["branch"] == branch:
-            result.append(student)
+    if branch:
+        cursor = students.find({"branch": branch})
+    else:
+        cursor = students.find()
+
+    for student in cursor:
+        student["_id"] = str(student["_id"])
+        result.append(student)
 
     return result
 
 
-@app.get("/students/{student_id}")
-def get_student_by_id(student_id: int):
-    if student_id not in students:
-        raise HTTPException(
-            status_code=404,
-            detail=" student Not found"
-        )
-    return students[student_id]
-
-
-@app.post("/students",status_code=status.HTTP_201_CREATED)
+@app.post("/students", status_code=status.HTTP_201_CREATED)
 def create_student(student: Student):
-    new_id = max(students.keys()) + 1 if students else 1
 
-    students[new_id] = {
-        "name": student.name,
-        "age": student.age,
-        "roll_no": student.roll_no,
-        "branch": student.branch
-    }
+    result = students.insert_one(student.model_dump())
 
     return {
         "message": "Student created successfully",
-        "student_id":new_id,
-        "student": students[new_id]
+        "id": str(result.inserted_id)
+    }
+@app.put("/students/{roll_no}")
+def update_student(roll_no: str, student: Student):
+    result = students.update_one(
+        {"roll_no": roll_no},
+        {
+            "$set": student.model_dump()
+        }
+    )
+
+    if result.matched_count == 0:
+        return {
+            "message": "Student not found"
+        }
+
+    return {
+        "message": "Student updated successfully"
     }
 
+@app.delete("/students/{roll_no}")
+def delete_student(roll_no: str):
 
-teachers = {
-    1: {
-        "name": "Ram",
-        "teacher_id": "T100",
-        "department": "CSE"
-    },
-    2: {
-        "name": "Sita",
-        "teacher_id": "T101",
-        "department": "ECE"
-    },
-    3: {
-        "name": "Krishna",
-        "teacher_id": "T102",
-        "department": "ME"
+    result = students.delete_one(
+        {"roll_no": roll_no}
+    )
+
+    if result.deleted_count == 0:
+        raise HTTPException(
+            status_code=404,
+            detail="Student not found"
+        )
+
+    return {
+        "message": "Student deleted successfully"
     }
-}
 
+# -------------------- Teacher Routes --------------------
 
 @app.get("/teachers")
 def get_teachers(department: Optional[str] = None):
-    if department is None:
-        return teachers
 
     result = []
 
-    for teacher in teachers.values():
-        if teacher["department"] == department:
-            result.append(teacher)
+    if department:
+        cursor = teachers.find({"department": department})
+    else:
+        cursor = teachers.find()
+
+    for teacher in cursor:
+        teacher["_id"] = str(teacher["_id"])
+        result.append(teacher)
 
     return result
 
 
-@app.get("/teachers/{teacher_id}")
-def get_teacher_by_id(teacher_id: int):
-   if teacher_id not in teachers:
-       raise HTTPException(
-           status_code=404,
-           detail="Teacher Not Found"
-       )
-   return teachers[teacher_id]
+@app.post("/teachers", status_code=status.HTTP_201_CREATED)
+def create_teacher(teacher: Teacher):
 
-
-@app.post("/teachers",status_code=status.HTTP_201_CREATED)
-def create_teachers(teacher:Teacher):
-    teach_id = max(teachers.keys()) + 1 if teachers else 1
-    teachers[teach_id] = {
-        "name": teacher.name,
-        "teacher_id": teacher.teacher_id,
-        "department": teacher.department
-    }
+    result = teachers.insert_one(teacher.model_dump())
 
     return {
         "message": "Teacher created successfully",
-        "Teacher_id":teach_id,
-        "Teacher": teachers[teach_id]
+        "id": str(result.inserted_id)
     }
 
-
-
-@app.put("/students/{student_id}")
-def update_students(student_id:int,student:Student):
-    if student_id not in students:
-       raise HTTPException(
-           status_code=404,
-           detail="Student Not Found"
-       )
-    students[student_id] = {
-        "name" : student.name,
-        "age": student.age,
-        "roll_no": student.roll_no,
-        "branch": student.branch
-    }
-
-    return{
-        "message":"Updated succefully",
-        "Student-id":students[student_id]
-    }
 @app.put("/teachers/{teacher_id}")
-def update_teachers(teacher_id:int,teacher:Teacher):
-    if teacher_id not in teachers:
-       raise HTTPException(
-           status_code=404,
-           detail="Teacher Not Found"
-       )
-    teachers[teacher_id] = {
-        "name" : teacher.name,
-        "teacher_id": teacher.teacher_id,
-        "departent": teacher.department
+def update_teacher(teacher_id: str, teacher: Teacher):
+    result = teachers.update_one(
+        {"teacher_id": teacher_id},
+        {
+            "$set": teacher.model_dump()
+        }
+    )
+
+    if result.matched_count == 0:
+        return {
+            "message": "Teacher not found"
+        }
+
+    return {
+        "message": "teacher updated successfully"
     }
 
-    return{
-        "message":"Updated succefully",
-        "teachers-id":teachers[teacher_id]
-    }
-
-@app.delete("/students/{student_id}")
-def delete_students(student_id:int):
-    if student_id not in students:
-       raise HTTPException(
-           status_code=404,
-           detail="Student Not Found"
-       )
-    deleted_student = students.pop(student_id)
-    return{
-        "Message":"Student Deleted Succefully",
-        "Deleted-student":deleted_student
-    }
 @app.delete("/teachers/{teacher_id}")
-def delete_teacher(teacher_id:int):
-    if teacher_id not in teachers:
-       raise HTTPException(
-           status_code=404,
-           detail="Teacher Not Found"
-       )
-    deleted_teacher = teachers.pop(teacher_id)
-    return{
-        "Message":"teacher Deleted Succefully",
-        "Deleted-teacher":deleted_teacher
+def delete_teacher(teacher_id: str):
+
+    result = teachers.delete_one(
+        {"teacher_id": teacher_id}
+    )
+
+    if result.deleted_count == 0:
+        raise HTTPException(
+            status_code=404,
+            detail="teacher not found"
+        )
+
+    return {
+        "message":" Teacher deleted successfully"
     }
