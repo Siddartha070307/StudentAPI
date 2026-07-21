@@ -1,0 +1,4 @@
+fastapi   -- To perform backend Operations 
+uvicorn   -- To execute .py files
+pymongo   -- Used for Mongodb Communication
+pydantic  -- BaseModel

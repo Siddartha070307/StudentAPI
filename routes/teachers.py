@@ -4,14 +4,9 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
 from db import teachers
-
+from models import Teacher
 router = APIRouter()
 
-
-class Teacher(BaseModel):
-    name: str
-    teacher_id: str
-    department: str
 
 
 @router.get("/teachers")

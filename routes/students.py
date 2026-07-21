@@ -6,14 +6,7 @@ from pydantic import BaseModel
 from db import students
 
 router = APIRouter()
-
-
-class Student(BaseModel):
-    name: str
-    age: int
-    roll_no: str
-    branch: str
-
+from models import Student
 
 @router.get("/students")
 def get_students(branch: Optional[str] = None):
