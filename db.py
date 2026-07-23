@@ -6,3 +6,4 @@ db = client["student_db"]
 
 students = db["students"]
 teachers = db["teachers"]
+users = db["users"]
